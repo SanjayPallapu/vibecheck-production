@@ -1,133 +1,229 @@
 const express = require('express');
 const cors = require('cors');
-
 const app = express();
 
-// Environment variables
 const PORT = process.env.PORT || 10000;
+const NODE_ENV = process.env.NODE_ENV || 'development';
 
-// Middleware
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// In-memory OTP storage (in production, use Redis or database)
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+  next();
+});
+
 const otpStore = new Map();
+const OTP_VALIDITY = 5 * 60 * 1000;
+const MAX_ATTEMPTS = 3;
+const OTP_LENGTH = 6;
 
-// Generate 6-digit OTP
 function generateOTP() {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  return Math.floor(Math.pow(10, OTP_LENGTH - 1) + Math.random() * (Math.pow(10, OTP_LENGTH) - Math.pow(10, OTP_LENGTH - 1))).toString();
 }
 
-// Health check endpoint
+function validatePhone(phone) {
+  return /^\d{10}$/.test(phone);
+}
+
+function validateOTP(otp) {
+  return /^\d{6}$/.test(otp);
+}
+
+function isOTPExpired(expiresAt) {
+  return Date.now() > expiresAt;
+}
+
 app.get('/', (req, res) => {
   res.json({
     status: 'online',
     service: 'VibeCheck API',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    environment: NODE_ENV,
+    uptime: process.uptime()
   });
 });
 
-// Send OTP endpoint
 app.post('/api/send-otp', async (req, res) => {
   try {
     const { phone } = req.body;
 
-    if (!phone || !/^\d{10}$/.test(phone)) {
-      return res.status(400).json({ 
-        error: 'Please provide a valid 10-digit phone number' 
+    if (!phone) {
+      return res.status(400).json({
+        success: false,
+        error: 'Phone number is required'
       });
     }
 
-    // Generate OTP
-    const otp = generateOTP();
-    const expiresAt = Date.now() + 5 * 60 * 1000; // 5 minutes
+    if (!validatePhone(phone)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Please provide a valid 10-digit phone number'
+      });
+    }
 
-    // Store OTP
-    otpStore.set(phone, { otp, expiresAt });
-
-    // Log OTP for testing (in production, send via SMS)
-    console.log(`OTP for ${phone}: ${otp}`);
-
-    // Clean up expired OTPs
-    setTimeout(() => {
-      const stored = otpStore.get(phone);
-      if (stored && stored.expiresAt <= Date.now()) {
-        otpStore.delete(phone);
+    if (otpStore.has(phone)) {
+      const existing = otpStore.get(phone);
+      if (!isOTPExpired(existing.expiresAt)) {
+        return res.status(429).json({
+          success: false,
+          error: 'OTP already sent. Please wait before requesting a new one.'
+        });
       }
-    }, 5 * 60 * 1000);
+    }
 
-    res.json({ 
-      success: true, 
-      message: 'OTP sent successfully. Check server logs for OTP (testing mode)',
-      phone: phone 
+    const otp = generateOTP();
+    const expiresAt = Date.now() + OTP_VALIDITY;
+
+    otpStore.set(phone, {
+      otp,
+      expiresAt,
+      attempts: 0,
+      createdAt: new Date().toISOString()
     });
 
+    console.log(`\n[OTP Generated] Phone: ${phone}, OTP: ${otp}\n`);
+
+    setTimeout(() => {
+      if (otpStore.has(phone)) {
+        const stored = otpStore.get(phone);
+        if (isOTPExpired(stored.expiresAt)) {
+          otpStore.delete(phone);
+        }
+      }
+    }, OTP_VALIDITY + 1000);
+
+    res.json({
+      success: true,
+      message: 'OTP sent successfully',
+      phone: phone,
+      expiresIn: 300
+    });
   } catch (error) {
     console.error('Send OTP error:', error);
-    res.status(500).json({ 
-      error: 'Failed to send OTP. Please try again.' 
+    res.status(500).json({
+      success: false,
+      error: 'Failed to send OTP'
     });
   }
 });
 
-// Verify OTP endpoint
 app.post('/api/verify-otp', async (req, res) => {
   try {
     const { phone, otp } = req.body;
 
     if (!phone || !otp) {
-      return res.status(400).json({ 
-        error: 'Phone number and OTP are required' 
+      return res.status(400).json({
+        success: false,
+        error: 'Phone number and OTP are required'
       });
     }
 
-    // Get stored OTP
+    if (!validatePhone(phone)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid phone number format'
+      });
+    }
+
+    if (!validateOTP(otp)) {
+      return res.status(400).json({
+        success: false,
+        error: 'OTP must be a 6-digit number'
+      });
+    }
+
+    if (!otpStore.has(phone)) {
+      return res.status(400).json({
+        success: false,
+        error: 'OTP not found'
+      });
+    }
+
     const stored = otpStore.get(phone);
 
-    if (!stored) {
-      return res.status(400).json({ 
-        error: 'OTP expired or not found. Please request a new OTP.' 
-      });
-    }
-
-    // Check expiration
-    if (Date.now() > stored.expiresAt) {
+    if (isOTPExpired(stored.expiresAt)) {
       otpStore.delete(phone);
-      return res.status(400).json({ 
-        error: 'OTP has expired. Please request a new OTP.' 
+      return res.status(400).json({
+        success: false,
+        error: 'OTP has expired'
       });
     }
 
-    // Verify OTP
+    if (stored.attempts >= MAX_ATTEMPTS) {
+      otpStore.delete(phone);
+      return res.status(429).json({
+        success: false,
+        error: 'Maximum attempts exceeded'
+      });
+    }
+
     if (stored.otp !== otp) {
-      return res.status(400).json({ 
-        error: 'Invalid OTP. Please try again.' 
+      stored.attempts += 1;
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid OTP',
+        attemptsRemaining: MAX_ATTEMPTS - stored.attempts
       });
     }
 
-    // OTP verified - clean up
     otpStore.delete(phone);
-
-    // Generate session token (simplified for demo)
     const sessionToken = Buffer.from(`${phone}:${Date.now()}`).toString('base64');
 
-    res.json({ 
-      success: true, 
-      message: 'Phone number verified successfully',
+    res.json({
+      success: true,
+      message: 'Phone verified successfully',
+      phone: phone,
       token: sessionToken,
-      phone: phone
+      timestamp: new Date().toISOString()
     });
-
   } catch (error) {
     console.error('Verify OTP error:', error);
-    res.status(500).json({ 
-      error: 'Failed to verify OTP. Please try again.' 
+    res.status(500).json({
+      success: false,
+      error: 'Failed to verify OTP'
     });
   }
 });
 
-// Start server
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'healthy',
+    service: 'OTP Service',
+    activeOTPs: otpStore.size,
+    timestamp: new Date().toISOString()
+  });
+});
+
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    error: 'Endpoint not found'
+  });
+});
+
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({
+    success: false,
+    error: 'Internal server error'
+  });
+});
+
 app.listen(PORT, () => {
-  console.log(`VibeCheck API running on port ${PORT}`);
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`\nVibeCheck API Server`);
+  console.log(`Server running on port ${PORT}`);
+  console.log(`Environment: ${NODE_ENV}`);
+  console.log(`Started at: ${new Date().toISOString()}\n`);
+});
+
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received');
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  console.log('SIGINT received');
+  process.exit(0);
 });
