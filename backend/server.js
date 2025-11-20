@@ -45,8 +45,7 @@ app.post('/api/auth/send-otp', async (req, res) => {
     }
 
     const { data, error } = await supabase.auth.signInWithOtp({
-      phone: phone
-    });
+      email: `${phone}@vibecheck.temp`    });
 
     if (error) {
       console.error('OTP send error:', error);
@@ -69,10 +68,8 @@ app.post('/api/auth/verify-otp', async (req, res) => {
     }
 
     const { data, error } = await supabase.auth.verifyOtp({
-      phone: phone,
-      token: token,
-      type: 'sms'
-    });
+      email: `${phone}@vibecheck.temp`,      token: token,
+      type: 'email'    });
 
     if (error) {
       console.error('OTP verify error:', error);
