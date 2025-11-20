@@ -139,7 +139,7 @@
             btn.textContent = 'Sending...';
             
             try {
-                const res = await fetch(`${API_URL}/api/auth/send-otp`, {
+                const res = await fetch(`${API_URL}/api/send-otp`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ phone: `+91${phone}` })
@@ -177,7 +177,7 @@
             btn.textContent = 'Verifying...';
             
             try {
-                const res = await fetch(`${API_URL}/api/auth/verify-otp`, {
+                const res = await fetch(`${API_URL}/api/send-o/api/verify-otptp`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ phone: `+91${phone}`, token: otp })
