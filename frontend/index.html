@@ -185,7 +185,7 @@
           showStatus('✅ Phone verified successfully!', 'success');
           localStorage.setItem('sessionToken', data.token);
           setTimeout(() => {
-            window.location.href = '/shop.html';
+            window.location.href = '/';
           }, 2000);
         } else {
           const remaining = data.attemptsRemaining;
