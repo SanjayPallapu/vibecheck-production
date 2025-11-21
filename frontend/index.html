@@ -1,217 +1,574 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VibeCheck - AI Streetwear</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-    .container {
-      background: white;
-      border-radius: 20px;
-      padding: 40px;
-      max-width: 400px;
-      width: 100%;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-    }
-    h1 {
-      color: #667eea;
-      margin-bottom: 10px;
-      font-size: 32px;
-    }
-    .subtitle {
-      color: #666;
-      margin-bottom: 30px;
-      font-size: 14px;
-    }
-    .status {
-      padding: 12px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      font-size: 14px;
-      margin-bottom: 20px;
-    }
-    .status.success { background: #d4edda; color: #155724; }
-    .status.error { background: #f8d7da; color: #721c24; }
-    .status.info { background: #d1ecf1; color: #0c5460; }
-    input, button {
-      width: 100%;
-      padding: 15px;
-      border: 2px solid #e0e0e0;
-      border-radius: 10px;
-      font-size: 16px;
-      font-weight: 600;
-      margin-bottom: 15px;
-      transition: transform 0.2s;
-    }
-    button {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    button:hover { transform: translateY(-2px); }
-    button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-    .api-status {
-      text-align: center;
-      padding: 10px;
-      background: #f8f9fa;
-      border-radius: 8px;
-      margin-top: 20px;
-      font-size: 12px;
-    }
-    .section { margin: 20px 0; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VibeCheck - AI Streetwear</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a1a;
+            color: #fff;
+        }
+
+        /* Login Container Styles */
+        #loginContainer {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .container h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .status {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .status.success { background: #d4edda; color: #155724; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        .status.info { background: #d1ecf1; color: #0c5460; }
+
+        input, button {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+
+        button:hover { transform: translateY(-2px); }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .api-status {
+            text-align: center;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        /* Shopping Interface Styles */
+        #shopContainer {
+            display: none;
+            background: #1a1a1a;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: #000;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #333;
+        }
+
+        .navbar-brand {
+            font-size: 24px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .navbar-brand span:first-child { color: #fff; }
+        .navbar-brand span:last-child { color: #c3f53c; }
+
+        .navbar-right {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        .nav-icon {
+            color: #fff;
+            font-size: 20px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 8px;
+            width: auto;
+            margin: 0;
+        }
+
+        .nav-icon:hover { color: #c3f53c; }
+
+        .ticker {
+            background: #c3f53c;
+            color: #000;
+            padding: 8px 0;
+            text-align: center;
+            font-weight: 600;
+            font-size: 12px;
+            letter-spacing: 1px;
+        }
+
+        .main-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .section-header {
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 48px;
+            font-weight: 900;
+            margin-bottom: 0.5rem;
+        }
+
+        .section-subtitle {
+            color: #888;
+            font-size: 14px;
+            letter-spacing: 2px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .view-all {
+            color: #c3f53c;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 12px 24px;
+            border-radius: 25px;
+            background: transparent;
+            border: 1px solid #333;
+            color: #fff;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: auto;
+            margin: 0;
+        }
+
+        .filter-btn:hover,
+        .filter-btn.active {
+            background: #fff;
+            color: #000;
+            border-color: #fff;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .product-card {
+            background: #2a2a2a;
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.3s;
+            position: relative;
+        }
+
+        .product-card:hover {
+            transform: translateY(-8px);
+        }
+
+        .product-image {
+            width: 100%;
+            aspect-ratio: 1;
+            object-fit: cover;
+            background: #3a3a3a;
+        }
+
+        .favorite-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(0,0,0,0.6);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            color: #fff;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            margin: 0;
+        }
+
+        .favorite-btn:hover { background: rgba(0,0,0,0.8); }
+
+        .product-info {
+            padding: 1.5rem;
+        }
+
+        .product-name {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .product-category {
+            color: #888;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+        }
+
+        .product-price {
+            color: #c3f53c;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        @media (max-width: 768px) {
+            .products-grid {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                gap: 1rem;
+            }
+
+            .main-content {
+                padding: 1rem;
+            }
+
+            .section-title {
+                font-size: 32px;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h1>🔥 VibeCheck</h1>
-    <p class="subtitle">AI-Powered Streetwear Auth</p>
-    
-    <div id="status" class="status" style="display:none;"></div>
-    
-    <div id="phoneSection" class="section">
-      <input type="tel" id="phone" placeholder="Enter 10-digit mobile" maxlength="10" pattern="[0-9]{10}" />
-      <button id="sendOtpBtn" onclick="sendOTP()">Send OTP</button>
-    </div>
-    
-    <div id="otpSection" class="section" style="display:none;">
-      <input type="text" id="otp" placeholder="Enter 6-digit OTP" maxlength="6" pattern="[0-9]{6}" />
-      <button id="verifyOtpBtn" onclick="verifyOTP()">Verify OTP</button>
-    </div>
-    
-    <div class="api-status">
-      Backend: <span id="apiStatus">⏳ Checking...</span>
-    </div>
-  </div>
 
-  <script>
-    const API_URL = 'https://vibecheck-production.onrender.com';
-    let phone = '';
+    <!-- Login Container -->
+    <div id="loginContainer">
+        <div class="container">
+            <h1>🔥 VibeCheck</h1>
+            <p class="subtitle">AI-Powered Streetwear Auth</p>
+            
+            <div id="status" class="status"></div>
+            
+            <div id="phoneSection">
+                <input type="tel" id="phone" placeholder="Enter 10-digit mobile" maxlength="10" pattern="[0-9]{10}">
+                <button id="sendOtpBtn" onclick="sendOTP()">Send OTP</button>
+            </div>
+            
+            <div id="otpSection" style="display:none;">
+                <input type="text" id="otp" placeholder="Enter 6-digit OTP" maxlength="6" pattern="[0-9]{6}">
+                <button id="verifyOtpBtn" onclick="verifyOTP()">Verify OTP</button>
+            </div>
+            
+            <div class="api-status">
+                Backend: <span id="apiStatus">⏳ Checking...</span>
+            </div>
+        </div>
+    </div>
 
-    // Check API Status
-    async function checkAPIStatus() {
-      try {
-        const res = await fetch(API_URL + '/');
-        if (res.ok) {
-          document.getElementById('apiStatus').textContent = '✅ Connected';
-        } else {
-          document.getElementById('apiStatus').textContent = '⚠️ Not Ready';
+    <!-- Shopping Container -->
+    <div id="shopContainer">
+        <nav class="navbar">
+            <div class="navbar-brand">
+                <span>VIBE</span><span>CHECK</span>
+            </div>
+            <div class="navbar-right">
+                <button class="nav-icon" onclick="toggleTheme()">☀️</button>
+                <button class="nav-icon" onclick="showProfile()">👤</button>
+                <button class="nav-icon" onclick="showCart()">🛒</button>
+            </div>
+        </nav>
+        
+        <div class="ticker">
+            STYLIST V2.0 ACTIVE  //  LIMITED STOCK  //  VIBE CHECK  //  NEW DROP ONLINE  //
+        </div>
+        
+        <div class="main-content">
+            <div class="section-header">
+                <h2 class="section-title">FRESH DROPS</h2>
+                <div class="section-subtitle">
+                    <span>SEASON 04 // DIGITAL NOMAD</span>
+                    <a href="#" class="view-all">VIEW ALL →</a>
+                </div>
+            </div>
+            
+            <div class="filters">
+                <button class="filter-btn active" onclick="filterProducts('all')">ALL</button>
+                <button class="filter-btn" onclick="filterProducts('hoodies')">HOODIES</button>
+                <button class="filter-btn" onclick="filterProducts('bottoms')">BOTTOMS</button>
+                <button class="filter-btn" onclick="filterProducts('tshirts')">T-SHIRTS</button>
+                <button class="filter-btn" onclick="filterProducts('accessories')">ACCESSORIES</button>
+                <button class="filter-btn" onclick="filterProducts('outerwear')">OUTERWEAR</button>
+            </div>
+            
+            <div class="products-grid" id="productsGrid">
+                <!-- Products will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://vibecheck-production.onrender.com';
+        let phone = '';
+        
+        // Sample products data
+        const products = [
+            {
+                id: 1,
+                name: 'Cyber Punk Hoodie',
+                category: 'HOODIES',
+                price: 3499,
+                image: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=500&h=500&fit=crop'
+            },
+            {
+                id: 2,
+                name: 'Void Runner Joggers',
+                category: 'BOTTOMS',
+                price: 2499,
+                image: 'https://images.unsplash.com/photo-1547036967-23d11aacaee0?w=500&h=500&fit=crop'
+            },
+            {
+                id: 3,
+                name: 'Digital Nomad Tee',
+                category: 'TSHIRTS',
+                price: 1499,
+                image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&h=500&fit=crop'
+            },
+            {
+                id: 4,
+                name: 'Neon Dreams Jacket',
+                category: 'OUTERWEAR',
+                price: 4999,
+                image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=500&h=500&fit=crop'
+            }
+        ];
+        
+        // Check if user is already logged in
+        function checkAuth() {
+            const token = localStorage.getItem('sessionToken');
+            if (token) {
+                showShop();
+            }
         }
-      } catch (err) {
-        document.getElementById('apiStatus').textContent = '❌ Offline';
-      }
-    }
-
-    function showStatus(message, type = 'info') {
-      const status = document.getElementById('status');
-      status.textContent = message;
-      status.className = `status ${type}`;
-      status.style.display = 'block';
-    }
-
-    async function sendOTP() {
-      phone = document.getElementById('phone').value.trim();
-      
-      if (!phone || !/^\d{10}$/.test(phone)) {
-        showStatus('Please enter a valid 10-digit phone number', 'error');
-        return;
-      }
-
-      const btn = document.getElementById('sendOtpBtn');
-      btn.disabled = true;
-      btn.textContent = 'Sending...';
-
-      try {
-        const res = await fetch(API_URL + '/api/send-otp', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ phone })
+        
+        // Show shopping interface
+        function showShop() {
+            document.getElementById('loginContainer').style.display = 'none';
+            document.getElementById('shopContainer').style.display = 'block';
+            loadProducts();
+        }
+        
+        // Show login interface
+        function showLogin() {
+            document.getElementById('loginContainer').style.display = 'flex';
+            document.getElementById('shopContainer').style.display = 'none';
+            localStorage.removeItem('sessionToken');
+        }
+        
+        // Load products
+        function loadProducts(filter = 'all') {
+            const grid = document.getElementById('productsGrid');
+            const filteredProducts = filter === 'all' 
+                ? products 
+                : products.filter(p => p.category.toLowerCase() === filter);
+            
+            grid.innerHTML = filteredProducts.map(product => `
+                <div class="product-card">
+                    <img src="${product.image}" alt="${product.name}" class="product-image">
+                    <button class="favorite-btn">♡</button>
+                    <div class="product-info">
+                        <div class="product-name">${product.name}</div>
+                        <div class="product-category">${product.category}</div>
+                        <div class="product-price">₹${product.price.toFixed(2)}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Filter products
+        function filterProducts(category) {
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            loadProducts(category);
+        }
+        
+        // Utility functions for nav
+        function toggleTheme() {
+            alert('Theme toggle coming soon!');
+        }
+        
+        function showProfile() {
+            if (confirm('Logout?')) {
+                showLogin();
+            }
+        }
+        
+        function showCart() {
+            alert('Cart feature coming soon!');
+        }
+        
+        // API Status Check
+        async function checkAPIStatus() {
+            try {
+                const res = await fetch(API_URL + '/');
+                if (res.ok) {
+                    document.getElementById('apiStatus').textContent = '✅ Connected';
+                } else {
+                    document.getElementById('apiStatus').textContent = '⚠️ Not Ready';
+                }
+            } catch (err) {
+                document.getElementById('apiStatus').textContent = '❌ Offline';
+            }
+        }
+        
+        function showStatus(message, type = 'info') {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+        }
+        
+        async function sendOTP() {
+            phone = document.getElementById('phone').value.trim();
+            if (!phone || !/^\d{10}$/.test(phone)) {
+                showStatus('Please enter a valid 10-digit phone number', 'error');
+                return;
+            }
+            
+            const btn = document.getElementById('sendOtpBtn');
+            btn.disabled = true;
+            btn.textContent = 'Sending...';
+            
+            try {
+                const res = await fetch(API_URL + '/api/send-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone })
+                });
+                
+                const data = await res.json();
+                
+                if (res.ok && data.success) {
+                    showStatus('OTP sent successfully! Check your SMS', 'success');
+                    document.getElementById('phoneSection').style.display = 'none';
+                    document.getElementById('otpSection').style.display = 'block';
+                    document.getElementById('otp').focus();
+                } else {
+                    showStatus(data.error || 'Failed to send OTP', 'error');
+                }
+            } catch (err) {
+                console.error('Error:', err);
+                showStatus('Network error. Please try again.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Send OTP';
+            }
+        }
+        
+        async function verifyOTP() {
+            const otp = document.getElementById('otp').value.trim();
+            if (!otp || !/^\d{6}$/.test(otp)) {
+                showStatus('Please enter a valid 6-digit OTP', 'error');
+                return;
+            }
+            
+            const btn = document.getElementById('verifyOtpBtn');
+            btn.disabled = true;
+            btn.textContent = 'Verifying...';
+            
+            try {
+                const res = await fetch(API_URL + '/api/verify-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone, otp })
+                });
+                
+                const data = await res.json();
+                
+                if (res.ok && data.success) {
+                    showStatus('✅ Phone verified successfully!', 'success');
+                    localStorage.setItem('sessionToken', data.token);
+                    setTimeout(() => {
+                        showShop();
+                    }, 1500);
+                } else {
+                    const remaining = data.attemptsRemaining;
+                    const msg = remaining !== undefined 
+                        ? `Invalid OTP. ${remaining} attempts remaining.` 
+                        : data.error;
+                    showStatus(msg || 'Verification failed', 'error');
+                }
+            } catch (err) {
+                console.error('Error:', err);
+                showStatus('Network error. Please try again.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Verify OTP';
+            }
+        }
+        
+        // Allow Enter key
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('phone').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') sendOTP();
+            });
+            document.getElementById('otp').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') verifyOTP();
+            });
+            
+            // Check auth on load
+            checkAuth();
+            checkAPIStatus();
+            setInterval(checkAPIStatus, 10000);
         });
-
-        const data = await res.json();
-
-        if (res.ok && data.success) {
-          showStatus('OTP sent successfully! Check your SMS', 'success');
-          document.getElementById('phoneSection').style.display = 'none';
-          document.getElementById('otpSection').style.display = 'block';
-          document.getElementById('otp').focus();
-        } else {
-          showStatus(data.error || 'Failed to send OTP', 'error');
-        }
-      } catch (err) {
-        console.error('Error:', err);
-        showStatus('Network error. Please try again.', 'error');
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'Send OTP';
-      }
-    }
-
-    async function verifyOTP() {
-      const otp = document.getElementById('otp').value.trim();
-      
-      if (!otp || !/^\d{6}$/.test(otp)) {
-        showStatus('Please enter a valid 6-digit OTP', 'error');
-        return;
-      }
-
-      const btn = document.getElementById('verifyOtpBtn');
-      btn.disabled = true;
-      btn.textContent = 'Verifying...';
-
-      try {
-        const res = await fetch(API_URL + '/api/verify-otp', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ phone, otp })
-        });
-
-        const data = await res.json();
-
-        if (res.ok && data.success) {
-          showStatus('✅ Phone verified successfully!', 'success');
-          localStorage.setItem('sessionToken', data.token);
-          setTimeout(() => {
-            window.location.href = '/';
-          }, 2000);
-        } else {
-          const remaining = data.attemptsRemaining;
-          const msg = remaining !== undefined ? `Invalid OTP. ${remaining} attempts remaining.` : data.error;
-          showStatus(msg || 'Verification failed', 'error');
-        }
-      } catch (err) {
-        console.error('Error:', err);
-        showStatus('Network error. Please try again.', 'error');
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'Verify OTP';
-      }
-    }
-
-    // Allow Enter key
-    document.getElementById('phone').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') sendOTP();
-    });
-    document.getElementById('otp').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') verifyOTP();
-    });
-
-    // Check API on load
-    checkAPIStatus();
-    setInterval(checkAPIStatus, 10000);
-  </script>
+    </script>
 </body>
 </html>
